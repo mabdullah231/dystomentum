@@ -1,0 +1,3 @@
+Dystomentum is an offline-first personal tracking system for Windows, built with Electron, React, TypeScript, Tailwind CSS, and SQLite. Version 1.0 focuses on personal finance and expense tracking, with no cloud, backend server, authentication, or internet dependency.
+
+The application follows a clean layered architecture: Routes → Controllers → Services → Repositories → SQLite, with Electron IPC providing the bridge between the React renderer and the local backend. The goal is to keep UI, business logic, and data access clearly separated while maintaining a lightweight local desktop experience.
