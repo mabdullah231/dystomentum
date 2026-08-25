@@ -20,15 +20,16 @@ function App() {
       if (preferences && typeof preferences === 'object') {
         const saved = preferences as SetupPreferences
         if (typeof saved.theme === 'string') setSetupTheme(saved.theme)
-        setIsSetupComplete(true)
+        setIsSetupComplete(saved.firstLaunchCompleted ?? true)
       }
       setSetupStatusLoaded(true)
     }).catch(() => setSetupStatusLoaded(true))
   }, [])
 
   async function completeSetup(preferences: SetupPreferences): Promise<void> {
-    await window.electronAPI.invoke('initialize-database', preferences)
-    setSetupTheme(preferences.theme)
+    const finalizedPreferences = { ...preferences, firstLaunchCompleted: true }
+    await window.electronAPI.invoke('initialize-database', finalizedPreferences)
+    setSetupTheme(finalizedPreferences.theme)
     setIsSetupComplete(true)
   }
 

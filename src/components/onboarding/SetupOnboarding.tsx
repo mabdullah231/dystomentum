@@ -11,6 +11,7 @@ export type SetupPreferences = {
   backupPath: string
   automaticBackups: boolean
   frequency: string
+  firstLaunchCompleted?: boolean
 }
 
 type Step = 1 | 2 | 3
@@ -73,13 +74,23 @@ export function SetupOnboarding({ initialPreferences, onComplete }: SetupOnboard
 
   async function submit(): Promise<void> {
     setIsSubmitting(true)
-    await onComplete({ username: normalizedUsername, currency, theme, backupPath, automaticBackups, frequency })
+    await onComplete({ username: normalizedUsername, currency, theme, backupPath, automaticBackups, frequency, firstLaunchCompleted: true })
     setIsSubmitting(false)
   }
 
   return (
     <main className={`flex min-h-screen items-center justify-center px-4 pb-10 pt-[76px] transition-colors duration-700 ${isLightTheme ? 'bg-[#F4F4F5] text-[#18181B]' : 'bg-[#0A0A0C] text-white'}`}>
-      <TopTitleBar title="Setup" />
+      <TopTitleBar
+        title="Setup"
+        isLightTheme={isLightTheme}
+        onToggleTheme={() => {
+          setTheme((currentTheme) => {
+            if (currentTheme === 'Dark') return 'Light'
+            if (currentTheme === 'Light') return 'Follow System'
+            return 'Dark'
+          })
+        }}
+      />
       <section className="w-full max-w-[480px] animate-screen-enter" aria-labelledby="setup-title">
         <div className="mb-5 flex justify-center gap-2" aria-label={`Setup step ${step} of 3`}>
           {([1, 2, 3] as Step[]).map((item) => <span key={item} className={`h-2.5 w-2.5 rounded-full ${item === step ? 'bg-white ring-2 ring-[#3B82F6] ring-offset-2 ring-offset-[#0A0A0C]' : 'bg-[#3F3F46]'}`} />)}
