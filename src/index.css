@@ -80,13 +80,214 @@
   * {
     @apply border-border outline-ring;
   }
-  body {
-    @apply min-w-[320px] bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
+
+  body {
+    @apply min-w-[320px] bg-background text-foreground;
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+    overflow-x: hidden;
+  }
+
+  /* Radix Select locks document scrolling while its menu is open. Its default
+     scrollbar compensation uses a right margin, which exposes the body
+     background as a blank strip in the desktop shell. Let the app fill the
+     released scrollbar area instead. */
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
+  }
+
+/* ===== Custom Scroll Indicator for Main Content ===== */
+
+/* Hide native scrollbar on the main scroll container */
+.page-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.page-scroll::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+/* Scroll indicator track – fixed, slim, on the right side */
+.workspace-scroll-indicator {
+  position: fixed;
+  right: 8px;
+  width: 4px;
+  border-radius: 9999px;
+  pointer-events: none; /* allow clicks to pass through to the thumb */
+  z-index: 40;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.workspace-scroll-indicator:hover {
+  opacity: 1;
+}
+
+/* Track backgrounds – dark & light modes */
+.workspace-scroll-indicator-dark {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.workspace-scroll-indicator-light {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* The draggable thumb */
+.workspace-scroll-thumb {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border-radius: 9999px;
+  pointer-events: auto; /* allow drag interactions */
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  will-change: transform;
+}
+
+/* Dark mode: emerald green */
+.workspace-scroll-indicator-dark .workspace-scroll-thumb {
+  background: #10B981;
+}
+
+/* Light mode: neutral gray */
+.workspace-scroll-indicator-light .workspace-scroll-thumb {
+  background: #D4D4D8;
+}
+
+/* Hover & active states for the thumb */
+.workspace-scroll-thumb:hover {
+  filter: brightness(1.2);
+}
+
+.workspace-scroll-thumb:active {
+  filter: brightness(1.4);
+}
   #root {
     @apply min-h-screen;
+  }
+
+  @keyframes page-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes sheet-slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(26px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes detail-panel-slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(18px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes dropdown-open {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes dropdown-close {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.98);
+    }
+  }
+
+  @keyframes backdrop-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .page-shell {
+    animation: page-fade-in 220ms ease-out;
+  }
+
+  .sheet-backdrop {
+    animation: backdrop-fade-in 180ms ease-out;
+    z-index: 200;
+  }
+
+  .sheet-panel {
+    animation: sheet-slide-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 210;
+  }
+
+  .detail-panel {
+    animation: detail-panel-slide-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .dropdown-panel[data-state='open'] {
+    animation: dropdown-open 180ms ease-out;
+  }
+
+  .dropdown-panel[data-state='closed'] {
+    animation: dropdown-close 150ms ease-in;
+  }
+
+  .sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(113, 113, 122, 0.7) transparent;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: rgba(113, 113, 122, 0.55);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(113, 113, 122, 0.8);
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 }

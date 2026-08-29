@@ -4,8 +4,8 @@ interface SplashScreenProps {
 
 export function SplashScreen({ progress = 0 }: SplashScreenProps) {
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#0A0A0C] pt-9 text-[#E8E8EC]" aria-label="Dystomentum is starting">
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-10 flex h-9 items-center justify-center border-b border-[#18181B] shadow-sm shadow-black/20 [-webkit-app-region:drag]">
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#0A0A0C] pt-11 text-[#E8E8EC]" aria-label="Dystomentum is starting">
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-10 flex h-11 items-center justify-center border-b border-[#18181B] shadow-sm shadow-black/20 [-webkit-app-region:drag]">
         <div className="flex items-center gap-2">
           <img src="/branding/Icon.png" alt="" className="h-4 w-4 rounded-[3px] object-cover" aria-hidden="true" />
           <span className="text-[11px] font-bold tracking-[0.16em] text-[#E8E8EC]">DYSTOMENTUM</span>

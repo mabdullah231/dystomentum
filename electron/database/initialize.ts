@@ -154,6 +154,46 @@ export async function getSetupPreferences(): Promise<SetupPreferences | null> {
   }
 }
 
+export async function saveSetupPreferences(partialPreferences: Partial<SetupPreferences>): Promise<SetupPreferences> {
+  const currentPreferences = (await getSetupPreferences()) ?? {
+    username: DEFAULT_APP_SETTINGS.username,
+    currency: DEFAULT_APP_SETTINGS.currency,
+    theme: DEFAULT_APP_SETTINGS.theme,
+    backupPath: DEFAULT_APP_SETTINGS.backup_location,
+    automaticBackups: DEFAULT_APP_SETTINGS.automatic_backups === 'true',
+    frequency: DEFAULT_APP_SETTINGS.backup_frequency,
+    firstLaunchCompleted: DEFAULT_APP_SETTINGS.first_launch_completed === 'true',
+  }
+
+  const mergedPreferences: SetupPreferences = {
+    username: partialPreferences.username ?? currentPreferences.username,
+    currency: partialPreferences.currency ?? currentPreferences.currency,
+    theme: partialPreferences.theme ?? currentPreferences.theme,
+    backupPath: partialPreferences.backupPath ?? currentPreferences.backupPath,
+    automaticBackups: partialPreferences.automaticBackups ?? currentPreferences.automaticBackups,
+    frequency: partialPreferences.frequency ?? currentPreferences.frequency,
+    firstLaunchCompleted: partialPreferences.firstLaunchCompleted ?? currentPreferences.firstLaunchCompleted,
+  }
+
+  const db = await getDatabase()
+  const appSettings: Array<[string, string]> = [
+    ['username', mergedPreferences.username],
+    ['currency', mergedPreferences.currency],
+    ['theme', mergedPreferences.theme],
+    ['backup_location', mergedPreferences.backupPath],
+    ['database_location', DEFAULT_DATABASE_LOCATION],
+    ['automatic_backups', String(mergedPreferences.automaticBackups)],
+    ['backup_frequency', mergedPreferences.frequency],
+    ['first_launch_completed', String(Boolean(mergedPreferences.firstLaunchCompleted ?? true))],
+  ]
+
+  for (const [key, value] of appSettings) {
+    await upsertAppSetting(db, key, value)
+  }
+
+  return mergedPreferences
+}
+
 export async function initializeDatabase(preferences: SetupPreferences): Promise<void> {
   const db = await getDatabase()
   db.run('PRAGMA foreign_keys = ON;')
