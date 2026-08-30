@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react'
 import { useState } from 'react'
-import { cn } from '../../utils/cn'
+import { formatCurrency } from '../../utils/currency'
 
 interface IncomeEntry {
   id: string
@@ -14,18 +14,10 @@ interface IncomeEntry {
 interface IncomeHistoricalTableProps {
   entries: IncomeEntry[]
   isLightTheme: boolean
+  currency: string
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
-export function IncomeHistoricalTable({ entries, isLightTheme }: IncomeHistoricalTableProps) {
+export function IncomeHistoricalTable({ entries, isLightTheme, currency }: IncomeHistoricalTableProps) {
   const [search, setSearch] = useState('')
 
   const filtered = entries.filter((e) =>
@@ -94,7 +86,7 @@ export function IncomeHistoricalTable({ entries, isLightTheme }: IncomeHistorica
                     {entry.method}
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-sm font-bold text-[#10B981]">
-                    +{formatCurrency(entry.amount)}
+                    +{formatCurrency(entry.amount, currency)}
                   </td>
                 </tr>
               ))

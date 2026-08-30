@@ -5,7 +5,9 @@ interface TransactionRow {
   date: string
   description: string
   category: string
+  categoryId?: number | null
   method: string
+  paymentMethodId?: number | null
   type: 'INCOME' | 'EXPENSE'
   amount: number
   notes: string
@@ -15,27 +17,44 @@ interface TransactionRow {
 interface TransactionDetailPanelProps {
   transaction: TransactionRow | null
   isLightTheme: boolean
+  currency: string
   onClose: () => void
+  onEdit: (transaction: TransactionRow) => void
+  onDelete: (id: string) => void
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
+function formatCurrency(value: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  } catch {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  }
 }
 
 function formatDate(dateString: string): string {
+  const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  const date = match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    : new Date(dateString)
+  if (Number.isNaN(date.getTime())) return dateString
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date(dateString))
+  }).format(date)
 }
 
-export function TransactionDetailPanel({ transaction, isLightTheme, onClose }: TransactionDetailPanelProps) {
+export function TransactionDetailPanel({ transaction, isLightTheme, currency, onClose, onEdit, onDelete }: TransactionDetailPanelProps) {
   if (!transaction) return null
 
   const isIncome = transaction.type === 'INCOME'
@@ -60,11 +79,11 @@ export function TransactionDetailPanel({ transaction, isLightTheme, onClose }: T
           </div>
 
           <div className="mt-5 font-mono text-[28px] font-bold tracking-tight" style={{ color: isIncome ? '#10B981' : isLightTheme ? '#18181B' : '#F4F4F5' }}>
-            {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+            {isIncome ? '+' : '-'}{formatCurrency(transaction.amount, currency)}
           </div>
 
           <div className={`mt-4 rounded-[10px] border px-3 py-2 text-[11px] ${isLightTheme ? 'border-[#D4D4D8] bg-[#FFFFFF] text-[#52525B]' : 'border-[#27272A] bg-[#121215] text-[#A1A1AA]'}`}>
-            Reference: <span className="font-mono text-[#F4F4F5]">{transaction.reference}</span>
+            Reference: <span className={`font-mono ${isLightTheme ? 'text-[#18181B]' : 'text-[#F4F4F5]'}`}>{transaction.reference}</span>
           </div>
         </div>
 
@@ -83,7 +102,7 @@ export function TransactionDetailPanel({ transaction, isLightTheme, onClose }: T
               <div>
                 <div className={`text-[9px] font-bold uppercase tracking-[0.16em] ${isLightTheme ? 'text-[#52525B]' : 'text-[#71717A]'}`}>Value</div>
                 <div className={`mt-1 font-mono text-sm ${isIncome ? 'text-[#10B981]' : isLightTheme ? 'text-[#18181B]' : 'text-[#F4F4F5]'}`}>
-                  {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+                  {isIncome ? '+' : '-'}{formatCurrency(transaction.amount, currency)}
                 </div>
               </div>
             </div>
@@ -97,14 +116,14 @@ export function TransactionDetailPanel({ transaction, isLightTheme, onClose }: T
               </div>
               <div>
                 <div className={`text-[9px] font-bold uppercase tracking-[0.16em] ${isLightTheme ? 'text-[#52525B]' : 'text-[#71717A]'}`}>Method</div>
-                <div className={`mt-1 text-sm ${isLightTheme ? 'text-[#18181B]' : 'text-[#F4F4F5]'}`}>{transaction.method}</div>
+                <div className={`mt-1 text-sm ${isLightTheme ? 'text-[#18181B]' : 'text-[#F4F4F5]'}`}>{transaction.method || '—'}</div>
               </div>
             </div>
 
             <div>
               <div className={`text-[9px] font-bold uppercase tracking-[0.16em] ${isLightTheme ? 'text-[#52525B]' : 'text-[#71717A]'}`}>Verification Notes</div>
               <div className={`mt-2 rounded-[10px] border p-3 font-mono text-[11px] leading-6 ${isLightTheme ? 'border-[#D4D4D8] bg-white text-[#18181B]' : 'border-[#27272A] bg-[#121215] text-[#E4E4E7]'}`}>
-                {transaction.notes}
+                {transaction.notes?.trim() ? transaction.notes : 'No notes recorded.'}
               </div>
             </div>
           </div>
@@ -112,11 +131,11 @@ export function TransactionDetailPanel({ transaction, isLightTheme, onClose }: T
       </div>
 
       <div className={`mt-auto flex gap-3 border-t p-4 ${isLightTheme ? 'border-[#E4E4E7] bg-[#F8F8F9]' : 'border-[#27272A] bg-[#141417]'}`}>
-        <button type="button" className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold ${isLightTheme ? 'border-[#D4D4D8] bg-[#FFFFFF] text-[#18181B] hover:bg-[#F4F4F5]' : 'border-[#3F3F46] bg-[#1E1E22] text-white hover:bg-[#2A2A2F]'}`}>
+        <button type="button" onClick={() => onEdit(transaction)} className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold ${isLightTheme ? 'border-[#D4D4D8] bg-[#FFFFFF] text-[#18181B] hover:bg-[#F4F4F5]' : 'border-[#3F3F46] bg-[#1E1E22] text-white hover:bg-[#2A2A2F]'}`}>
           <Pencil className="h-4 w-4" />
           Edit Entry
         </button>
-        <button type="button" className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#7F1D1D] bg-[#2A1A1D] px-4 py-2.5 text-sm font-semibold text-[#FCA5A5] hover:bg-[#3B1F23]">
+        <button type="button" onClick={() => onDelete(transaction.id)} className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#7F1D1D] bg-[#2A1A1D] px-4 py-2.5 text-sm font-semibold text-[#FCA5A5] hover:bg-[#3B1F23]">
           <Trash2 className="h-4 w-4" />
           Delete
         </button>

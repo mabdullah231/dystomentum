@@ -35,7 +35,7 @@ export function Pagination({
           type="button"
           className={buttonClass(false)}
           onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
+          disabled={currentPage <= 1 || totalPages === 0}
         >
           Previous
         </button>
@@ -53,7 +53,7 @@ export function Pagination({
           type="button"
           className={buttonClass(false)}
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          disabled={currentPage >= totalPages || totalPages === 0}
         >
           Next
         </button>

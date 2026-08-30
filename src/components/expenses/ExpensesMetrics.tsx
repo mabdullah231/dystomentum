@@ -1,8 +1,9 @@
-import { cn } from '../../utils/cn'
+import { formatCurrency } from '../../utils/currency'
 
 interface ExpensesMetricsProps {
   totalExpenses: number
   numberOfExpenses: number
+  recordCountDelta: number
   highestExpense: number
   highestExpenseCategory: string
   avgDailySpending: number
@@ -11,20 +12,13 @@ interface ExpensesMetricsProps {
   largestCategoryShare: number
   trendPercent: number // negative if decreased
   isLightTheme: boolean
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
+  currency: string
 }
 
 export function ExpensesMetrics({
   totalExpenses,
   numberOfExpenses,
+  recordCountDelta,
   highestExpense,
   highestExpenseCategory,
   avgDailySpending,
@@ -33,6 +27,7 @@ export function ExpensesMetrics({
   largestCategoryShare,
   trendPercent,
   isLightTheme,
+  currency,
 }: ExpensesMetricsProps) {
   const panelClass = isLightTheme
     ? 'border-[#D4D4D8] bg-white'
@@ -50,7 +45,7 @@ export function ExpensesMetrics({
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Total Expenses</div>
         <div className={`mt-2 font-mono text-[28px] font-bold ${headingClass}`}>
-          {formatCurrency(totalExpenses)}
+          {formatCurrency(totalExpenses, currency)}
         </div>
         <div className={`mt-1 text-xs ${trendColor}`}>
           {trendPercent >= 0 ? '+' : ''}{trendPercent.toFixed(1)}% vs last month
@@ -63,14 +58,16 @@ export function ExpensesMetrics({
         <div className={`mt-2 font-mono text-[28px] font-bold ${headingClass}`}>
           {numberOfExpenses}
         </div>
-        <div className={`mt-1 text-xs ${mutedClass}`}>+12 entries</div>
+        <div className={`mt-1 text-xs ${mutedClass}`}>
+          {recordCountDelta >= 0 ? '+' : ''}{recordCountDelta} vs last month
+        </div>
       </div>
 
       {/* Highest Expense */}
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Highest Expense</div>
         <div className={`mt-2 font-mono text-[28px] font-bold ${headingClass}`}>
-          {formatCurrency(highestExpense)}
+          {formatCurrency(highestExpense, currency)}
         </div>
         <div className={`mt-1 text-xs ${mutedClass}`}>{highestExpenseCategory} Category</div>
       </div>
@@ -79,9 +76,9 @@ export function ExpensesMetrics({
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Avg Daily Spending</div>
         <div className={`mt-2 font-mono text-[28px] font-bold ${headingClass}`}>
-          {formatCurrency(avgDailySpending)}
+          {formatCurrency(avgDailySpending, currency)}
         </div>
-        <div className={`mt-1 text-xs ${mutedClass}`}>Target: {formatCurrency(budgetTarget)} limit</div>
+        <div className={`mt-1 text-xs ${mutedClass}`}>Last month daily: {formatCurrency(budgetTarget, currency)}</div>
       </div>
 
       {/* Largest Category */}

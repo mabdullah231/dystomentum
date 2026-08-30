@@ -2,7 +2,7 @@ import { Search } from 'lucide-react'
 import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
-import { cn } from '../../utils/cn'
+import { formatCurrency } from '../../utils/currency'
 
 interface ExpenseEntry {
   id: string
@@ -15,25 +15,18 @@ interface ExpenseEntry {
 
 interface ExpensesTableProps {
   entries: ExpenseEntry[]
+  methods?: string[]
   isLightTheme: boolean
+  currency: string
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
-const methodOptions = ['All Methods', 'Direct Debit', 'ACH Transfer', 'Personal Card', 'Crypto Wallet']
 const sortOptions = ['Newest', 'Oldest', 'Amount (High to Low)', 'Amount (Low to High)']
 
-export function ExpensesTable({ entries, isLightTheme }: ExpensesTableProps) {
+export function ExpensesTable({ entries, methods, isLightTheme, currency }: ExpensesTableProps) {
   const [search, setSearch] = useState('')
   const [selectedMethod, setSelectedMethod] = useState('All Methods')
   const [sortBy, setSortBy] = useState('Newest')
+  const methodOptions = methods && methods.length > 0 ? methods : ['All Methods']
 
   const filtered = entries.filter((e) => {
     const query = search.toLowerCase()
@@ -213,7 +206,7 @@ export function ExpensesTable({ entries, isLightTheme }: ExpensesTableProps) {
                     </span>
                   </td>
                   <td className={`px-3 py-3 text-right font-mono text-sm font-bold ${isLightTheme ? 'text-[#991B1B]' : 'text-[#F87171]'}`}>
-                    -{formatCurrency(entry.amount)}
+                    -{formatCurrency(entry.amount, currency)}
                   </td>
                 </tr>
               ))

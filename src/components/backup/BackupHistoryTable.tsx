@@ -9,6 +9,8 @@ export interface BackupHistoryEntry {
   storageLocation: string
   fileSize: string // e.g., "4.8 MB"
   status: BackupStatus
+  path?: string
+  exists?: boolean
 }
 
 interface BackupHistoryTableProps {
@@ -60,10 +62,10 @@ export function BackupHistoryTable({ entries, onRestore, onDelete, isLightTheme 
                   <td className={`px-3 py-3 font-mono text-sm ${headingClass}`}>
                     {formatTimestamp(entry.timestamp)}
                   </td>
-                  <td className={`px-3 py-3 font-mono text-sm font-bold ${headingClass}`}>
+                  <td className={`px-3 py-3 break-all font-mono text-sm font-bold ${headingClass}`}>
                     {entry.filename}
                   </td>
-                  <td className={`px-3 py-3 text-sm ${mutedClass}`}>{entry.storageLocation}</td>
+                  <td className={`px-3 py-3 break-all text-sm ${mutedClass}`}>{entry.storageLocation}</td>
                   <td className={`px-3 py-3 font-mono text-sm ${headingClass}`}>{entry.fileSize}</td>
                   <td className="px-3 py-3">
                     <StatusBadge status={entry.status} isLightTheme={isLightTheme} />

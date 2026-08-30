@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MonthRangePicker } from '../components/reports/MonthRangePicker'
 import { ComparisonKPICards } from '../components/reports/ComparisonKPICards'
 import { ThreeMonthTrendChart } from '../components/reports/ThreeMonthTrendChart'
@@ -7,50 +7,76 @@ import { PrivacyBanner } from '../components/reports/PrivacyBanner'
 
 interface ReportsPageProps {
   isLightTheme?: boolean
+  transactionRevision?: number
 }
 
-// Sample data – will be replaced with real DB queries
-const sampleKPIs = {
-  income: { current: 24500, previous: 21000, changePercent: 16.6 },
-  expenses: { current: 15361, previous: 16100, changePercent: -4.5 },
-  savings: { current: 9138, previous: 4900, changePercent: 86.4 },
-  savingsRate: { current: 37.3, previous: 23.3, changePercent: 14.0 },
+type ComparisonMetric = { current: number; previous: number; changePercent: number }
+
+type ReportsOverview = {
+  kpis: {
+    income: ComparisonMetric
+    expenses: ComparisonMetric
+    savings: ComparisonMetric
+    savingsRate: ComparisonMetric
+  }
+  trend: Array<{ label: string; income: number; expenses: number }>
+  paymentMethods: Array<{ method: string; share: number }>
 }
 
-const sampleTrend = [
-  { label: 'May 2026', income: 21000, expenses: 16100 },
-  { label: 'Jun 2026', income: 23000, expenses: 15800 },
-  { label: 'Jul 2026', income: 24500, expenses: 15361 },
-]
+const emptyOverview: ReportsOverview = {
+  kpis: {
+    income: { current: 0, previous: 0, changePercent: 0 },
+    expenses: { current: 0, previous: 0, changePercent: 0 },
+    savings: { current: 0, previous: 0, changePercent: 0 },
+    savingsRate: { current: 0, previous: 0, changePercent: 0 },
+  },
+  trend: [],
+  paymentMethods: [],
+}
 
-const samplePaymentData = [
-  { method: 'Direct Debit', share: 42 },
-  { method: 'Personal Card', share: 31 },
-  { method: 'ACH Transfer', share: 18 },
-  { method: 'Crypto Wallet', share: 9 },
-]
+function toYearMonth(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
 
-export function ReportsPage({ isLightTheme = false }: ReportsPageProps) {
-  // Default to current month and previous month
+export function ReportsPage({ isLightTheme = false, transactionRevision = 0 }: ReportsPageProps) {
   const now = new Date()
-  const defaultBase = new Date(now.getFullYear(), now.getMonth(), 1)
-  const defaultCompare = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-
-  const [baseMonth, setBaseMonth] = useState(defaultBase)
-  const [compareMonth, setCompareMonth] = useState(defaultCompare)
+  const [baseMonth, setBaseMonth] = useState(new Date(now.getFullYear(), now.getMonth(), 1))
+  const [compareMonth, setCompareMonth] = useState(new Date(now.getFullYear(), now.getMonth() - 1, 1))
+  const [overview, setOverview] = useState<ReportsOverview>(emptyOverview)
+  const [currency, setCurrency] = useState('USD')
+  const [status, setStatus] = useState('')
 
   const headingClass = isLightTheme ? 'text-[#18181B]' : 'text-white'
   const mutedClass = isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'
-
-  const formatMonth = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date)
-  }
-
+  const formatMonth = (date: Date) => new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date)
   const pageTitle = `${formatMonth(baseMonth)} vs ${formatMonth(compareMonth)} Comparison`
+
+  useEffect(() => {
+    let isCurrent = true
+    void window.electronAPI.invoke('get-setup-preferences').then((preferences) => {
+      if (!isCurrent || !preferences || typeof preferences !== 'object') return
+      const savedCurrency = (preferences as { currency?: unknown }).currency
+      if (typeof savedCurrency === 'string' && savedCurrency.trim()) setCurrency(savedCurrency.trim().slice(0, 3).toUpperCase())
+    }).catch(() => undefined)
+
+    void window.electronAPI.invoke('get-reports-overview', {
+      baseMonth: toYearMonth(baseMonth),
+      compareMonth: toYearMonth(compareMonth),
+    }).then((response) => {
+      if (!isCurrent || !response || typeof response !== 'object') return
+      setOverview(response as ReportsOverview)
+      setStatus('')
+    }).catch(() => {
+      if (isCurrent) setStatus('Unable to load report data.')
+    })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [baseMonth, compareMonth, transactionRevision])
 
   return (
     <div className="min-w-0 animate-screen-enter space-y-6 xl:space-y-8">
-      {/* Page Header */}
       <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className={`text-[30px] font-bold tracking-tight ${headingClass}`}>{pageTitle}</h1>
@@ -74,22 +100,22 @@ export function ReportsPage({ isLightTheme = false }: ReportsPageProps) {
         </div>
       </header>
 
-      {/* KPI Cards */}
+      {status && <p role="status" className="text-sm text-red-400">{status}</p>}
+
       <ComparisonKPICards
-        income={sampleKPIs.income}
-        expenses={sampleKPIs.expenses}
-        savings={sampleKPIs.savings}
-        savingsRate={sampleKPIs.savingsRate}
+        income={overview.kpis.income}
+        expenses={overview.kpis.expenses}
+        savings={overview.kpis.savings}
+        savingsRate={overview.kpis.savingsRate}
         isLightTheme={isLightTheme}
+        currency={currency}
       />
 
-      {/* Chart and Distribution */}
       <div className="grid gap-4 xl:grid-cols-[1.9fr_1fr]">
-        <ThreeMonthTrendChart data={sampleTrend} isLightTheme={isLightTheme} />
-        <PaymentMethodDistribution data={samplePaymentData} isLightTheme={isLightTheme} />
+        <ThreeMonthTrendChart data={overview.trend} isLightTheme={isLightTheme} />
+        <PaymentMethodDistribution data={overview.paymentMethods} isLightTheme={isLightTheme} />
       </div>
 
-      {/* Privacy Banner */}
       <PrivacyBanner isLightTheme={isLightTheme} />
     </div>
   )

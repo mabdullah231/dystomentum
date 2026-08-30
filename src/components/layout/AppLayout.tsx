@@ -108,7 +108,6 @@ export function AppLayout({ activePage, onNavigate, currentPage, isLightTheme, o
         isLightTheme={isLightTheme}
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed((value) => !value)}
-        onToggleTheme={onToggleTheme}
         titleBarHeight={titleBarMetrics.height}
       />
       <main

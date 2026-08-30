@@ -9,15 +9,6 @@ interface IncomeLedgerSharesProps {
   isLightTheme: boolean
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
 export function IncomeLedgerShares({ data, isLightTheme }: IncomeLedgerSharesProps) {
   const panelClass = isLightTheme
     ? 'border-[#D4D4D8] bg-white'

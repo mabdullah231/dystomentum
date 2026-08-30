@@ -20,12 +20,12 @@ export function TransactionTypeCheckboxes({
   isLightTheme,
 }: TransactionTypeCheckboxesProps) {
   const containerClass = isLightTheme
-    ? 'bg-[#F4F4F5] text-[#18181B]'
+    ? 'border-[#D4D4D8] bg-white text-[#18181B]'
     : 'bg-[#121215] text-white'
 
   const checkboxClass = isLightTheme
-    ? 'border-[#D4D4D8] accent-[#18181B]'
-    : 'border-[#27272A] accent-white'
+    ? 'border-[#A1A1AA] accent-[#18181B]'
+    : 'border-[#52525B] accent-white'
 
   return (
     <div className={`rounded-xl border p-3 ${containerClass}`}>

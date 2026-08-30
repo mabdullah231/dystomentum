@@ -5,6 +5,7 @@ export interface CategoryItem {
   id: string
   name: string
   icon: React.ReactNode
+  iconName?: string
   isDefault: boolean
   transactionCount: number
   color?: string // optional accent color for icon

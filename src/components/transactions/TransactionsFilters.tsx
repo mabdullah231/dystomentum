@@ -12,6 +12,8 @@ interface TransactionsFiltersProps {
   search: string
   onSearchChange: (value: string) => void
   filters: FilterConfig[]
+  sortLabel: string
+  onToggleSort: () => void
   onClearFilters: () => void
   isLightTheme: boolean
 }
@@ -20,6 +22,8 @@ export function TransactionsFilters({
   search,
   onSearchChange,
   filters,
+  sortLabel,
+  onToggleSort,
   onClearFilters,
   isLightTheme,
 }: TransactionsFiltersProps) {
@@ -43,7 +47,7 @@ export function TransactionsFilters({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full bg-transparent text-sm outline-none placeholder:text-[#71717A]"
-          placeholder="Search description..."
+          placeholder="Search description, category, notes, or ID..."
         />
       </label>
 
@@ -82,8 +86,12 @@ export function TransactionsFilters({
       </div>
 
       <div className="ml-auto flex items-center gap-3">
-        <button type="button" className={`text-sm font-medium ${isLightTheme ? 'text-[#18181B]' : 'text-[#F4F4F5]'}`}>
-          Sort: Newest
+        <button
+          type="button"
+          onClick={onToggleSort}
+          className={`text-sm font-medium ${isLightTheme ? 'text-[#18181B]' : 'text-[#F4F4F5]'}`}
+        >
+          Sort: {sortLabel}
         </button>
         <button
           type="button"

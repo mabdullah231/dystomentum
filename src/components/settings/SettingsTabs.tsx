@@ -20,6 +20,9 @@ export function SettingsTabs({ activeTab, onTabChange, isLightTheme }: SettingsT
   const textInactive = isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'
   const textActive = isLightTheme ? 'text-[#18181B]' : 'text-white'
   const borderActive = isLightTheme ? 'border-[#D4D4D8]' : 'border-[#27272A]'
+  const inactiveHover = isLightTheme
+    ? 'hover:bg-white hover:text-[#18181B] hover:border-[#A1A1AA]'
+    : 'hover:text-white hover:border-[#3F3F46]'
 
   return (
     <div className="flex gap-2">
@@ -34,7 +37,7 @@ export function SettingsTabs({ activeTab, onTabChange, isLightTheme }: SettingsT
               'rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200',
               isActive
                 ? `${bgActive} ${textActive} ${borderActive} border shadow-sm`
-                : `${bgInactive} ${textInactive} hover:text-white`
+                : `${bgInactive} ${textInactive} border border-transparent ${inactiveHover}`
             )}
           >
             {tab.label}

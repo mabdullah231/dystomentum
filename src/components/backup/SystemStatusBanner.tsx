@@ -45,14 +45,14 @@ export function SystemStatusBanner({
           <div className={`text-[10px] font-bold uppercase tracking-[0.16em] ${labelClass}`}>
             Current Database Source Path
           </div>
-          <div className={`mt-0.5 font-mono text-sm ${headingClass}`}>{dbPath}</div>
+          <div className={`mt-0.5 break-all font-mono text-sm ${headingClass}`}>{dbPath}</div>
         </div>
 
         <div>
           <div className={`text-[10px] font-bold uppercase tracking-[0.16em] ${labelClass}`}>
             Backup Target Directory
           </div>
-          <div className={`mt-0.5 font-mono text-sm ${headingClass}`}>{backupTarget}</div>
+          <div className={`mt-0.5 break-all font-mono text-sm ${headingClass}`}>{backupTarget}</div>
         </div>
       </div>
 

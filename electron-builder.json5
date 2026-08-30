@@ -1,7 +1,10 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.dystomentum.app",
+  "productName": "Dystomentum",
+  "executableName": "Dystomentum",
+  "copyright": "Copyright (c) 2026 Dystomentum",
   "icon": "public/branding/Icon.png",
   "asar": true,
   "extraResources": [
@@ -10,7 +13,6 @@
       "to": "sqlite/sql-wasm.wasm"
     }
   ],
-  "productName": "YourAppName",
   "directories": {
     "output": "release/${version}"
   },
@@ -25,6 +27,7 @@
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {
+    "icon": "public/branding/Icon.png",
     "target": [
       {
         "target": "nsis",
@@ -48,5 +51,3 @@
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
 }
-
-

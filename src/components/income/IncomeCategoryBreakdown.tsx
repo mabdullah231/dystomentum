@@ -9,15 +9,6 @@ interface IncomeCategoryBreakdownProps {
   isLightTheme: boolean
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
 export function IncomeCategoryBreakdown({ data, isLightTheme }: IncomeCategoryBreakdownProps) {
   const panelClass = isLightTheme
     ? 'border-[#D4D4D8] bg-white'

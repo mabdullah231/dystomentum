@@ -16,33 +16,53 @@ interface TransactionsTableProps {
   transactions: TransactionRow[]
   selectedId: string
   onSelectRow: (id: string) => void
-  isDetailOpen: boolean // whether detail panel is shown (squeezes columns)
+  onOpenDetail: (id: string) => void
+  isDetailOpen: boolean
   isLightTheme: boolean
+  currency: string
+  isLoading: boolean
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
+function formatCurrency(value: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  } catch {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  }
 }
 
 function formatDate(dateString: string): string {
+  const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  const date = match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    : new Date(dateString)
+  if (Number.isNaN(date.getTime())) return dateString
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date(dateString))
+  }).format(date)
 }
 
 export function TransactionsTable({
   transactions,
   selectedId,
   onSelectRow,
+  onOpenDetail,
   isDetailOpen,
   isLightTheme,
+  currency,
+  isLoading,
 }: TransactionsTableProps) {
   const rowBgSelected = isLightTheme ? 'bg-[#E4E4E7]' : 'bg-[#1E1E24]'
   const rowBgHover = isLightTheme ? 'hover:bg-[#F4F4F5]' : 'hover:bg-[#1A1A1E]'
@@ -67,7 +87,13 @@ export function TransactionsTable({
           </tr>
         </thead>
         <tbody>
-          {transactions.length === 0 ? (
+          {isLoading ? (
+            <tr>
+              <td colSpan={isDetailOpen ? 7 : 8} className={`px-4 py-8 text-center text-sm ${isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'}`}>
+                Loading ledger entries...
+              </td>
+            </tr>
+          ) : transactions.length === 0 ? (
             <tr>
               <td colSpan={isDetailOpen ? 7 : 8} className={`px-4 py-8 text-center text-sm ${isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'}`}>
                 No ledger activity yet.
@@ -96,17 +122,25 @@ export function TransactionsTable({
                       {transaction.category}
                     </span>
                   </td>
-                  {!isDetailOpen && <td className={`px-3 py-3 text-sm ${isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'}`}>{transaction.method}</td>}
+                  {!isDetailOpen && <td className={`px-3 py-3 text-sm ${isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'}`}>{transaction.method || '—'}</td>}
                   <td className="px-3 py-3">
                     <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold uppercase ${isIncome ? (isLightTheme ? 'bg-[#DCFCE7] text-[#166534]' : 'bg-[#063B2F] text-[#6EE7B7]') : (isLightTheme ? 'bg-[#F4F4F5] text-[#18181B]' : 'bg-[#27272A] text-[#F4F4F5]')}`}>
                       {transaction.type}
                     </span>
                   </td>
                   <td className={`px-3 py-3 text-right font-mono text-sm font-semibold ${isIncome ? 'text-[#10B981]' : isLightTheme ? 'text-[#18181B]' : 'text-[#F4F4F5]'}`}>
-                    {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    {isIncome ? '+' : '-'}{formatCurrency(transaction.amount, currency)}
                   </td>
                   <td className="px-3 py-3 text-center">
-                    <button type="button" className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${isLightTheme ? 'hover:bg-[#E4E4E7] text-[#18181B]' : 'hover:bg-[#27272A] text-[#F4F4F5]'}`} aria-label={`Open menu for ${transaction.id}`}>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onOpenDetail(transaction.id)
+                      }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${isLightTheme ? 'hover:bg-[#E4E4E7] text-[#18181B]' : 'hover:bg-[#27272A] text-[#F4F4F5]'}`}
+                      aria-label={`Open details for ${transaction.id}`}
+                    >
                       <Ellipsis className="h-4 w-4" />
                     </button>
                   </td>

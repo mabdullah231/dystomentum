@@ -54,7 +54,7 @@ export function RecentExportsList({ exports, onOpenFolder, isLightTheme }: Recen
                 <span className={`text-xs ${mutedClass}`}>{item.date}</span>
                 <span className={`text-xs ${mutedClass}`}>{item.size}</span>
               </div>
-              <div className={`mt-1 font-mono text-sm font-bold ${textClass}`}>{item.filename}</div>
+              <div className={`mt-1 break-all font-mono text-sm font-bold ${textClass}`}>{item.filename}</div>
               <button
                 type="button"
                 onClick={() => onOpenFolder(item.path)}

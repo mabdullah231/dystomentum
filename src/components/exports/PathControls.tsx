@@ -31,7 +31,7 @@ export function PathControls({
             type="text"
             value={destinationPath}
             onChange={(e) => onPathChange(e.target.value)}
-            className={`flex-1 rounded-xl border px-3 py-2 font-mono text-sm outline-none ${inputClass}`}
+            className={`min-w-0 flex-1 rounded-xl border px-3 py-2 font-mono text-sm outline-none ${inputClass}`}
             placeholder="/path/to/exports"
           />
           <button
@@ -44,7 +44,7 @@ export function PathControls({
             }`}
           >
             <FolderOpen className="h-4 w-4" />
-            Browse...
+            Browse
           </button>
         </div>
       </div>

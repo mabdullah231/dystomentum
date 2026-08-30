@@ -1,4 +1,4 @@
-import { cn } from '../../utils/cn'
+import { formatCurrency } from '../../utils/currency'
 
 interface ComparisonKPICardsProps {
   income: { current: number; previous: number; changePercent: number }
@@ -6,15 +6,7 @@ interface ComparisonKPICardsProps {
   savings: { current: number; previous: number; changePercent: number }
   savingsRate: { current: number; previous: number; changePercent: number }
   isLightTheme: boolean
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
+  currency: string
 }
 
 export function ComparisonKPICards({
@@ -23,6 +15,7 @@ export function ComparisonKPICards({
   savings,
   savingsRate,
   isLightTheme,
+  currency,
 }: ComparisonKPICardsProps) {
   const panelClass = isLightTheme
     ? 'border-[#D4D4D8] bg-white'
@@ -43,8 +36,8 @@ export function ComparisonKPICards({
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Income Comparison</div>
         <div className={`mt-2 flex items-baseline gap-2`}>
-          <span className={`font-mono text-[28px] font-bold ${headingClass}`}>{formatCurrency(income.current)}</span>
-          <span className={`text-sm ${mutedClass}`}>vs {formatCurrency(income.previous)}</span>
+          <span className={`font-mono text-[28px] font-bold ${headingClass}`}>{formatCurrency(income.current, currency, 0)}</span>
+          <span className={`text-sm ${mutedClass}`}>vs {formatCurrency(income.previous, currency, 0)}</span>
         </div>
         <div className={`mt-1 text-xs ${getTrendColor(income.changePercent)}`}>
           {income.changePercent >= 0 ? '+' : ''}{income.changePercent.toFixed(1)}% from prev. cycle
@@ -55,8 +48,8 @@ export function ComparisonKPICards({
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Expense Comparison</div>
         <div className={`mt-2 flex items-baseline gap-2`}>
-          <span className={`font-mono text-[28px] font-bold ${headingClass}`}>{formatCurrency(expenses.current)}</span>
-          <span className={`text-sm ${mutedClass}`}>vs {formatCurrency(expenses.previous)}</span>
+          <span className={`font-mono text-[28px] font-bold ${headingClass}`}>{formatCurrency(expenses.current, currency, 0)}</span>
+          <span className={`text-sm ${mutedClass}`}>vs {formatCurrency(expenses.previous, currency, 0)}</span>
         </div>
         <div className={`mt-1 text-xs ${getTrendColor(expenses.changePercent, true)}`}>
           {expenses.changePercent >= 0 ? '+' : ''}{expenses.changePercent.toFixed(1)}% from prev. cycle
@@ -67,8 +60,8 @@ export function ComparisonKPICards({
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Savings Accumulated</div>
         <div className={`mt-2 flex items-baseline gap-2`}>
-          <span className={`font-mono text-[28px] font-bold ${headingClass}`}>{formatCurrency(savings.current)}</span>
-          <span className={`text-sm ${mutedClass}`}>vs {formatCurrency(savings.previous)}</span>
+          <span className={`font-mono text-[28px] font-bold ${headingClass}`}>{formatCurrency(savings.current, currency, 0)}</span>
+          <span className={`text-sm ${mutedClass}`}>vs {formatCurrency(savings.previous, currency, 0)}</span>
         </div>
         <div className={`mt-1 text-xs ${getTrendColor(savings.changePercent)}`}>
           {savings.changePercent >= 0 ? '+' : ''}{savings.changePercent.toFixed(1)}% from prev. cycle

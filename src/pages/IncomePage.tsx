@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { IncomeMetrics } from '../components/income/IncomeMetrics'
 import { IncomeCategoryBreakdown } from '../components/income/IncomeCategoryBreakdown'
 import { IncomeLedgerShares } from '../components/income/IncomeLedgerShares'
@@ -5,79 +7,135 @@ import { IncomeHistoricalTable } from '../components/income/IncomeHistoricalTabl
 
 interface IncomePageProps {
   isLightTheme?: boolean
+  transactionRevision?: number
 }
 
-// Sample data – will be replaced with real data from the database
-const sampleMetrics = {
-  totalMonthlyIncome: 8250.00,
-  recordCount: 14,
-  largestDeposit: 3400.00,
-  largestDepositSource: 'Corporate Contract',
-  averageTransaction: 589.28,
-  trendPercent: 4.1,
+type IncomeOverview = {
+  metrics: {
+    totalMonthlyIncome: number
+    recordCount: number
+    largestDeposit: number
+    largestDepositSource: string
+    averageTransaction: number
+    trendPercent: number
+  }
+  categoryBreakdown: Array<{ label: string; amount: number; percentage: number }>
+  ledgerShares: Array<{ category: string; amount: number; percentage: number }>
+  entries: Array<{ id: string; date: string; description: string; subtext: string; method: string; amount: number }>
 }
 
-const sampleCategoryData = [
-  { label: 'Contracts', amount: 5362.50, percentage: 65 },
-  { label: 'Dividends', amount: 1237.50, percentage: 15 },
-  { label: 'Interests', amount: 990.00, percentage: 12 },
-  { label: 'Other', amount: 660.00, percentage: 8 },
-]
+const emptyIncomeOverview: IncomeOverview = {
+  metrics: {
+    totalMonthlyIncome: 0,
+    recordCount: 0,
+    largestDeposit: 0,
+    largestDepositSource: 'No income yet',
+    averageTransaction: 0,
+    trendPercent: 0,
+  },
+  categoryBreakdown: [],
+  ledgerShares: [],
+  entries: [],
+}
 
-const sampleShares = [
-  { category: 'Contracts', percentage: 65.0, amount: 5362.50 },
-  { category: 'Dividends', percentage: 15.0, amount: 1237.50 },
-  { category: 'Interests', percentage: 12.0, amount: 990.00 },
-  { category: 'Other', percentage: 8.0, amount: 660.00 },
-]
+function getMonthLabel(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date)
+}
 
-const sampleEntries = [
-  { id: '1', date: '2026-07-15', description: 'Corporate Payout', subtext: 'Principal B7 Node', method: 'Wire Transfer', amount: 3400.00 },
-  { id: '2', date: '2026-07-10', description: 'Dividend Distribution', subtext: 'Q2 2026', method: 'ACH Direct', amount: 1237.50 },
-  { id: '3', date: '2026-07-05', description: 'Interest Accrual', subtext: 'Savings Bond', method: 'Direct Deposit', amount: 990.00 },
-  { id: '4', date: '2026-07-01', description: 'Freelance Consulting', subtext: 'Project Delta', method: 'Crypto Wallet', amount: 850.00 },
-  { id: '5', date: '2026-06-28', description: 'Royalty Payment', subtext: 'Licensing', method: 'Wire Transfer', amount: 600.00 },
-]
+function toYearMonth(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
 
-export function IncomePage({ isLightTheme = false }: IncomePageProps) {
+export function IncomePage({ isLightTheme = false, transactionRevision = 0 }: IncomePageProps) {
+  const [selectedMonth, setSelectedMonth] = useState<Date>(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  const [overview, setOverview] = useState<IncomeOverview>(emptyIncomeOverview)
+  const [currency, setCurrency] = useState('USD')
+  const [status, setStatus] = useState('')
   const headingClass = isLightTheme ? 'text-[#18181B]' : 'text-white'
+  const yearMonth = toYearMonth(selectedMonth)
+
+  useEffect(() => {
+    let isCurrent = true
+    void window.electronAPI.invoke('get-setup-preferences').then((preferences) => {
+      if (!isCurrent || !preferences || typeof preferences !== 'object') return
+      const savedCurrency = (preferences as { currency?: unknown }).currency
+      if (typeof savedCurrency === 'string' && savedCurrency.trim()) setCurrency(savedCurrency.trim().slice(0, 3).toUpperCase())
+    }).catch(() => undefined)
+
+    void window.electronAPI.invoke('get-income-overview', yearMonth).then((response) => {
+      if (!isCurrent || !response || typeof response !== 'object') return
+      setOverview(response as IncomeOverview)
+      setStatus('')
+    }).catch(() => {
+      if (isCurrent) setStatus('Unable to load income data.')
+    })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [yearMonth, transactionRevision])
 
   return (
     <div className="min-w-0 animate-screen-enter space-y-6 xl:space-y-8">
-      {/* Page Header */}
       <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h1 className={`text-[30px] font-bold tracking-tight ${headingClass}`}>Income Overview</h1>
-          <span className={`inline-flex mt-2 items-center rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#10B981] ${
-  isLightTheme
-    ? 'border-[#10B981]/30 bg-[#F0FDF4]'
-    : 'border-[#10B981]/30 bg-[#121215]'
-}`}>
-  Synced Vault
-</span>
+          <span className={`mt-2 inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#10B981] ${
+            isLightTheme
+              ? 'border-[#10B981]/30 bg-[#F0FDF4]'
+              : 'border-[#10B981]/30 bg-[#121215]'
+          }`}>
+            {getMonthLabel(selectedMonth)}
+          </span>
         </div>
-
+        <div
+          className={`flex items-center gap-2 rounded-full border px-2 py-1.5 ${
+            isLightTheme ? 'border-[#D4D4D8] bg-[#F4F4F5]' : 'border-[#27272A] bg-[#121215]'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setSelectedMonth((date) => new Date(date.getFullYear(), date.getMonth() - 1, 1))}
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
+              isLightTheme ? 'hover:bg-[#E4E4E7] text-[#18181B]' : 'hover:bg-[#1E1E24] text-white'
+            }`}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className={`min-w-[140px] text-center text-sm font-semibold ${headingClass}`}>
+            {getMonthLabel(selectedMonth)}
+          </div>
+          <button
+            type="button"
+            onClick={() => setSelectedMonth((date) => new Date(date.getFullYear(), date.getMonth() + 1, 1))}
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
+              isLightTheme ? 'hover:bg-[#E4E4E7] text-[#18181B]' : 'hover:bg-[#1E1E24] text-white'
+            }`}
+          >
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </header>
 
-      {/* Metrics */}
+      {status && <p role="status" className="text-sm text-red-400">{status}</p>}
+
       <IncomeMetrics
-        totalMonthlyIncome={sampleMetrics.totalMonthlyIncome}
-        recordCount={sampleMetrics.recordCount}
-        largestDeposit={sampleMetrics.largestDeposit}
-        largestDepositSource={sampleMetrics.largestDepositSource}
-        averageTransaction={sampleMetrics.averageTransaction}
-        trendPercent={sampleMetrics.trendPercent}
+        totalMonthlyIncome={overview.metrics.totalMonthlyIncome}
+        recordCount={overview.metrics.recordCount}
+        largestDeposit={overview.metrics.largestDeposit}
+        largestDepositSource={overview.metrics.largestDepositSource}
+        averageTransaction={overview.metrics.averageTransaction}
+        trendPercent={overview.metrics.trendPercent}
         isLightTheme={isLightTheme}
+        currency={currency}
       />
 
-      {/* Two-column: Category Breakdown + Ledger Shares */}
       <div className="grid gap-4 xl:grid-cols-[1.9fr_1fr]">
-        <IncomeCategoryBreakdown data={sampleCategoryData} isLightTheme={isLightTheme} />
-        <IncomeLedgerShares data={sampleShares} isLightTheme={isLightTheme} />
+        <IncomeCategoryBreakdown data={overview.categoryBreakdown} isLightTheme={isLightTheme} />
+        <IncomeLedgerShares data={overview.ledgerShares} isLightTheme={isLightTheme} />
       </div>
 
-      {/* Historical Income Entries */}
-      <IncomeHistoricalTable entries={sampleEntries} isLightTheme={isLightTheme} />
+      <IncomeHistoricalTable entries={overview.entries} isLightTheme={isLightTheme} currency={currency} />
     </div>
   )
 }

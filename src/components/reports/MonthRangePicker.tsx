@@ -10,14 +10,17 @@ interface MonthRangePickerProps {
   isLightTheme: boolean
 }
 
+function toYearMonth(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
 function generateMonthOptions(): Array<{ label: string; value: string }> {
   const options = []
   const now = new Date()
   for (let i = 0; i < 24; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const label = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(d)
-    const value = d.toISOString().slice(0, 7) // YYYY-MM
-    options.push({ label, value })
+    options.push({ label, value: toYearMonth(d) })
   }
   return options
 }
@@ -35,8 +38,8 @@ export function MonthRangePicker({
   isLightTheme,
 }: MonthRangePickerProps) {
   const options = generateMonthOptions()
-  const baseValue = baseMonth.toISOString().slice(0, 7)
-  const compareValue = compareMonth.toISOString().slice(0, 7)
+  const baseValue = toYearMonth(baseMonth)
+  const compareValue = toYearMonth(compareMonth)
 
   const selectClass = isLightTheme
     ? 'border-[#D4D4D8] bg-[#F4F4F5] text-[#18181B]'

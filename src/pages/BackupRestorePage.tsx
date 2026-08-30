@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SystemStatusBanner } from '../components/backup/SystemStatusBanner'
 import { BackupHistoryTable, BackupHistoryEntry } from '../components/backup/BackupHistoryTable'
 
@@ -6,75 +6,108 @@ interface BackupRestorePageProps {
   isLightTheme?: boolean
 }
 
-// Mock data – will be replaced with real data from the database
-const mockHistory: BackupHistoryEntry[] = [
-  {
-    id: '1',
-    timestamp: '2026-07-17T14:30:00Z',
-    filename: 'dystomentum_backup_20260717_1430.tar.gz',
-    storageLocation: 'Local Disk & Secure USB',
-    fileSize: '4.8 MB',
-    status: 'SUCCESS',
-  },
-  {
-    id: '2',
-    timestamp: '2026-07-16T02:00:00Z',
-    filename: 'dystomentum_backup_20260716_0200.tar.gz',
-    storageLocation: 'Local Disk Only',
-    fileSize: '4.7 MB',
-    status: 'SUCCESS',
-  },
-  {
-    id: '3',
-    timestamp: '2026-07-15T14:30:00Z',
-    filename: 'dystomentum_backup_20260715_1430.tar.gz',
-    storageLocation: 'Local Disk & Secure USB',
-    fileSize: '4.7 MB',
-    status: 'FAILED',
-  },
-  {
-    id: '4',
-    timestamp: '2026-07-14T02:00:00Z',
-    filename: 'dystomentum_backup_20260714_0200.tar.gz',
-    storageLocation: 'Local Disk Only',
-    fileSize: '4.6 MB',
-    status: 'SUCCESS',
-  },
-]
+type BackupStatus = {
+  dbPath: string
+  backupTarget: string
+  lastBackup: string
+  nextScheduled: string
+  totalSnapshots: number
+}
+
+const emptyStatus: BackupStatus = {
+  dbPath: 'Loading...',
+  backupTarget: 'Loading...',
+  lastBackup: 'Never',
+  nextScheduled: 'Not scheduled',
+  totalSnapshots: 0,
+}
 
 export function BackupRestorePage({ isLightTheme = false }: BackupRestorePageProps) {
-  const [history, setHistory] = useState(mockHistory)
+  const [history, setHistory] = useState<BackupHistoryEntry[]>([])
+  const [backupStatus, setBackupStatus] = useState<BackupStatus>(emptyStatus)
+  const [status, setStatus] = useState('')
+  const [isBusy, setIsBusy] = useState(false)
 
   const headingClass = isLightTheme ? 'text-[#18181B]' : 'text-white'
   const mutedClass = isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'
+  const statusClass = status.startsWith('Unable') ? 'text-red-400' : mutedClass
 
-  const handleBackupNow = () => {
-    // In real app, trigger backup process via IPC
-    alert('Backup process started. This would create a new archive.')
+  const refresh = async () => {
+    const [nextStatus, nextHistory] = await Promise.all([
+      window.electronAPI.invoke('check-backup-status'),
+      window.electronAPI.invoke('list-backups'),
+    ])
+    if (nextStatus && typeof nextStatus === 'object') setBackupStatus(nextStatus as BackupStatus)
+    if (Array.isArray(nextHistory)) setHistory(nextHistory as BackupHistoryEntry[])
   }
 
-  const handleRestore = () => {
-    // In real app, open restore dialog
-    alert('Restore dialog would open. Choose which backup to restore.')
-  }
+  useEffect(() => {
+    void refresh().catch(() => setStatus('Unable to load backup status.'))
+  }, [])
 
-  const handleRestoreEntry = (id: string) => {
-    // Confirm and restore specific backup
-    if (window.confirm(`Restore backup with ID ${id}? This will overwrite current database.`)) {
-      alert(`Restoring backup ${id}...`)
+  const handleBackupNow = async () => {
+    setIsBusy(true)
+    setStatus('')
+    try {
+      await window.electronAPI.invoke('create-backup')
+      await refresh()
+      setStatus('Backup snapshot created.')
+    } catch {
+      setStatus('Unable to create backup. Check the configured backup folder.')
+    } finally {
+      setIsBusy(false)
     }
   }
 
-  const handleDeleteEntry = (id: string) => {
-    if (window.confirm(`Delete backup archive ${id}? This action is irreversible.`)) {
-      setHistory((prev) => prev.filter((item) => item.id !== id))
-      alert(`Backup ${id} deleted.`)
+  const handleRestore = async () => {
+    if (!window.confirm('Restore a backup database? The current database file will be checkpointed first.')) return
+    setIsBusy(true)
+    setStatus('')
+    try {
+      const restored = await window.electronAPI.invoke('restore-backup')
+      if (restored) {
+        await refresh()
+        setStatus('Backup restored. Restart the app if a page still shows old data.')
+      }
+    } catch {
+      setStatus('Unable to restore selected backup.')
+    } finally {
+      setIsBusy(false)
+    }
+  }
+
+  const handleRestoreEntry = async (id: string) => {
+    if (!window.confirm(`Restore backup with ID ${id}? The current database file will be checkpointed first.`)) return
+    setIsBusy(true)
+    setStatus('')
+    try {
+      await window.electronAPI.invoke('restore-backup', id)
+      await refresh()
+      setStatus('Backup restored. Restart the app if a page still shows old data.')
+    } catch {
+      setStatus('Unable to restore that backup.')
+    } finally {
+      setIsBusy(false)
+    }
+  }
+
+  const handleDeleteEntry = async (id: string) => {
+    if (!window.confirm(`Delete backup archive ${id}? This removes the snapshot file from disk.`)) return
+    setIsBusy(true)
+    setStatus('')
+    try {
+      await window.electronAPI.invoke('delete-backup', id)
+      await refresh()
+      setStatus('Backup snapshot deleted.')
+    } catch {
+      setStatus('Unable to delete that backup.')
+    } finally {
+      setIsBusy(false)
     }
   }
 
   return (
     <div className="min-w-0 animate-screen-enter space-y-6 xl:space-y-8">
-      {/* Page Header */}
       <header>
         <h1 className={`text-[30px] font-bold tracking-tight ${headingClass}`}>Backup &amp; Restore Manager</h1>
         <p className={`mt-1 text-sm ${mutedClass}`}>
@@ -82,23 +115,23 @@ export function BackupRestorePage({ isLightTheme = false }: BackupRestorePagePro
         </p>
       </header>
 
-      {/* System Status Banner */}
       <SystemStatusBanner
-        dbPath="/Users/alex/Library/Application Support/Dystomentum/ledger.db"
-        backupTarget="/Users/alex/Backups/Dystomentum/"
-        lastBackup="Jul 17, 2026 at 14:30"
-        nextScheduled="Jul 18, 2026 at 02:00"
-        totalSnapshots={24}
-        onBackupNow={handleBackupNow}
-        onRestore={handleRestore}
+        dbPath={backupStatus.dbPath}
+        backupTarget={backupStatus.backupTarget}
+        lastBackup={backupStatus.lastBackup}
+        nextScheduled={backupStatus.nextScheduled}
+        totalSnapshots={backupStatus.totalSnapshots}
+        onBackupNow={() => void handleBackupNow()}
+        onRestore={() => void handleRestore()}
         isLightTheme={isLightTheme}
       />
 
-      {/* History Table */}
+      <p role="status" className={`text-sm ${statusClass}`}>{isBusy ? 'Working on backup storage...' : status}</p>
+
       <BackupHistoryTable
         entries={history}
-        onRestore={handleRestoreEntry}
-        onDelete={handleDeleteEntry}
+        onRestore={(id) => void handleRestoreEntry(id)}
+        onDelete={(id) => void handleDeleteEntry(id)}
         isLightTheme={isLightTheme}
       />
     </div>

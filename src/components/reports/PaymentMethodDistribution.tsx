@@ -23,20 +23,24 @@ export function PaymentMethodDistribution({ data, isLightTheme }: PaymentMethodD
     <div className={`rounded-[12px] border p-5 ${panelClass}`}>
       <h2 className={`text-[16px] font-bold ${headingClass}`}>Payment Method Distribution</h2>
       <div className="mt-4 space-y-4">
-        {sorted.map((item) => (
-          <div key={item.method}>
-            <div className="flex items-center justify-between gap-3">
-              <span className={`text-sm font-medium ${headingClass}`}>{item.method}</span>
-              <span className="font-mono text-sm text-[#A1A1AA]">{item.share.toFixed(0)}%</span>
+        {sorted.length === 0 ? (
+          <p className={`text-sm ${isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'}`}>No expense payments this month.</p>
+        ) : (
+          sorted.map((item) => (
+            <div key={item.method}>
+              <div className="flex items-center justify-between gap-3">
+                <span className={`text-sm font-medium ${headingClass}`}>{item.method}</span>
+                <span className="font-mono text-sm text-[#A1A1AA]">{item.share.toFixed(0)}%</span>
+              </div>
+              <div className={`mt-1 h-2 w-full overflow-hidden rounded-full ${trackClass}`}>
+                <div
+                  className={`h-full rounded-full ${fillClass}`}
+                  style={{ width: `${Math.min(item.share, 100)}%` }}
+                />
+              </div>
             </div>
-            <div className={`mt-1 h-2 w-full overflow-hidden rounded-full ${trackClass}`}>
-              <div
-                className={`h-full rounded-full ${fillClass}`}
-                style={{ width: `${Math.min(item.share, 100)}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   )

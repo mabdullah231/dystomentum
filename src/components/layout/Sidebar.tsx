@@ -1,4 +1,4 @@
-import { BarChart3, ChartNoAxesCombined, ChevronLeft, ChevronRight, CircleDollarSign, Download, FolderKanban, Gauge, HardDrive, Moon, Plus, ReceiptText, Settings, Sun, WalletCards } from 'lucide-react'
+import { ChartNoAxesCombined, ChevronLeft, ChevronRight, CircleDollarSign, Download, FolderKanban, Gauge, HardDrive, Plus, ReceiptText, Settings, WalletCards } from 'lucide-react'
 import { Button } from '../ui/button'
 import { NavItem } from './NavItem'
 
@@ -8,7 +8,6 @@ interface SidebarProps {
   isLightTheme: boolean
   isCollapsed: boolean
   onToggleCollapse: () => void
-  onToggleTheme: () => void
   titleBarHeight: number
 }
 
@@ -23,7 +22,7 @@ const navigation = [
   { label: 'Backup & Restore', icon: HardDrive },
 ]
 
-export function Sidebar({ activePage, onNavigate, isLightTheme, isCollapsed, onToggleCollapse, onToggleTheme, titleBarHeight }: SidebarProps) {
+export function Sidebar({ activePage, onNavigate, isLightTheme, isCollapsed, onToggleCollapse, titleBarHeight }: SidebarProps) {
   return (
     <aside style={{ top: titleBarHeight }} className={`fixed bottom-0 left-0 flex flex-col border-r px-2 py-4 transition-[width,background-color,border-color,box-shadow] duration-300 lg:z-20 lg:w-60 lg:px-3 lg:py-5 ${isCollapsed ? 'z-20 w-16' : 'z-40 w-60 shadow-2xl shadow-black/40'} ${isLightTheme ? 'border-[#D4D4D8] bg-[#FFFFFF]' : 'border-[#1E1E22] bg-[#121215]'}`}>
       <Button
@@ -41,23 +40,7 @@ export function Sidebar({ activePage, onNavigate, isLightTheme, isCollapsed, onT
         ))}
       </nav>
       <div className={`mt-auto border-t pt-3 ${isLightTheme ? 'border-[#D4D4D8]' : 'border-[#1E1E22]'}`}>
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          aria-label={isLightTheme ? 'Switch to dark mode' : 'Switch to light mode'}
-          title={isLightTheme ? 'Switch to dark mode' : 'Switch to light mode'}
-          className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors ${isLightTheme ? 'text-[#18181B] hover:bg-[#E4E4E7]' : 'text-white hover:bg-[#1E1E24]'}`}
-        >
-          {isLightTheme ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-          <span className={`${isCollapsed ? 'hidden' : 'inline'} truncate text-sm font-medium lg:inline`}>
-            {isLightTheme ? 'Dark mode' : 'Light mode'}
-          </span>
-        </button>
         <NavItem icon={Settings} label="Settings" isLightTheme={isLightTheme} isCollapsed={isCollapsed} isActive={activePage === 'Settings'} onClick={() => onNavigate('Settings')} />
-        <div className="mt-4 hidden items-center gap-2 px-3 text-[10px] uppercase tracking-[0.16em] text-[#71717A] lg:flex">
-          <BarChart3 className="h-3.5 w-3.5" />
-          Local workspace
-        </div>
       </div>
       <button type="button" title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} onClick={onToggleCollapse} className={`absolute -right-3 top-1/2 z-50 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border shadow-lg transition-colors lg:hidden ${isLightTheme ? 'border-[#D4D4D8] bg-white text-[#52525B] hover:bg-[#E4E4E7]' : 'border-[#3F3F46] bg-[#18181B] text-[#A1A1AA] hover:text-white'}`}>
         {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}

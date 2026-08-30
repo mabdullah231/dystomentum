@@ -6,9 +6,10 @@ import { KeyboardShortcutsTab } from '../components/settings/KeyboardShortcutsTa
 
 interface SettingsPageProps {
   isLightTheme?: boolean
+  onThemeChange: (theme: string) => void
 }
 
-export function SettingsPage({ isLightTheme = false }: SettingsPageProps) {
+export function SettingsPage({ isLightTheme = false, onThemeChange }: SettingsPageProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('app_settings')
 
   const headingClass = isLightTheme ? 'text-[#18181B]' : 'text-white'
@@ -29,7 +30,7 @@ export function SettingsPage({ isLightTheme = false }: SettingsPageProps) {
 
       {/* Tab Content */}
       <div>
-        {activeTab === 'app_settings' && <ApplicationSettingsTab isLightTheme={isLightTheme} />}
+        {activeTab === 'app_settings' && <ApplicationSettingsTab isLightTheme={isLightTheme} onThemeChange={onThemeChange} />}
         {activeTab === 'about_client' && <AboutClientTab isLightTheme={isLightTheme} />}
         {activeTab === 'shortcuts' && <KeyboardShortcutsTab isLightTheme={isLightTheme} />}
       </div>

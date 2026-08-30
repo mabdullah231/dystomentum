@@ -29,7 +29,7 @@ export function SetupOnboarding({ initialPreferences, onComplete }: SetupOnboard
   const [usernameTouched, setUsernameTouched] = useState(false)
   const [currency, setCurrency] = useState(initialPreferences?.currency ?? 'USD — US Dollar')
   const [theme, setTheme] = useState(initialPreferences?.theme ?? 'Dark')
-  const [backupPath, setBackupPath] = useState(initialPreferences?.backupPath ?? 'D:\\Backups\\Dystomentum\\backup_vault.db')
+  const [backupPath, setBackupPath] = useState(initialPreferences?.backupPath ?? 'D:\\Backups\\Dystomentum')
   const [automaticBackups, setAutomaticBackups] = useState(initialPreferences?.automaticBackups ?? true)
   const [frequency, setFrequency] = useState(initialPreferences?.frequency ?? 'Daily')
   const [isSubmitting, setIsSubmitting] = useState(false)

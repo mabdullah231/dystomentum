@@ -1,4 +1,4 @@
-import { cn } from '../../utils/cn'
+import { formatCurrency } from '../../utils/currency'
 
 interface IncomeMetricsProps {
   totalMonthlyIncome: number
@@ -8,15 +8,7 @@ interface IncomeMetricsProps {
   averageTransaction: number
   trendPercent: number
   isLightTheme: boolean
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
+  currency: string
 }
 
 export function IncomeMetrics({
@@ -27,6 +19,7 @@ export function IncomeMetrics({
   averageTransaction,
   trendPercent,
   isLightTheme,
+  currency,
 }: IncomeMetricsProps) {
   const panelClass = isLightTheme
     ? 'border-[#D4D4D8] bg-white'
@@ -34,7 +27,6 @@ export function IncomeMetrics({
 
   const headingClass = isLightTheme ? 'text-[#18181B]' : 'text-white'
   const mutedClass = isLightTheme ? 'text-[#52525B]' : 'text-[#A1A1AA]'
-  const labelClass = isLightTheme ? 'text-[#71717A]' : 'text-[#71717A]'
 
   const trendColor = trendPercent >= 0 ? 'text-[#10B981]' : 'text-[#F87171]'
 
@@ -44,7 +36,7 @@ export function IncomeMetrics({
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Total Monthly Income</div>
         <div className={`mt-2 font-mono text-[28px] font-bold text-[#10B981] ${headingClass}`}>
-          {formatCurrency(totalMonthlyIncome)}
+          {formatCurrency(totalMonthlyIncome, currency)}
         </div>
         <div className={`mt-1 text-xs ${trendColor}`}>
           {trendPercent >= 0 ? '+' : ''}{trendPercent.toFixed(1)}% vs last month
@@ -64,7 +56,7 @@ export function IncomeMetrics({
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Largest Deposit</div>
         <div className={`mt-2 font-mono text-[28px] font-bold ${headingClass}`}>
-          {formatCurrency(largestDeposit)}
+          {formatCurrency(largestDeposit, currency)}
         </div>
         <div className={`mt-1 text-xs ${mutedClass}`}>Source: {largestDepositSource}</div>
       </div>
@@ -73,7 +65,7 @@ export function IncomeMetrics({
       <div className={`rounded-[12px] border p-4 ${panelClass}`}>
         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#71717A]">Average Transaction</div>
         <div className={`mt-2 font-mono text-[28px] font-bold ${headingClass}`}>
-          {formatCurrency(averageTransaction)}
+          {formatCurrency(averageTransaction, currency)}
         </div>
         <div className={`mt-1 text-xs ${mutedClass}`}>Median deposit valuation</div>
       </div>

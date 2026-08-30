@@ -3,7 +3,6 @@ import { AppLayout } from './components/layout'
 import { SetupOnboarding, type SetupPreferences } from './components/onboarding/SetupOnboarding'
 import { SplashScreen } from './components/onboarding/SplashScreen'
 import { DashboardPage } from './pages/DashboardPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { IncomePage } from './pages/IncomePage'
 import { NewTransactionSheet } from './components/transactions/NewTransactionSheet'
@@ -13,6 +12,8 @@ import { ReportsPage } from './pages/ReportsPage'
 import { ExportPage } from './pages/ExportPage'
 import { BackupRestorePage } from './pages/BackupRestorePage'
 import { SettingsPage } from './pages/SettingsPage'
+import { type KeyboardShortcutAction } from './constants/keyboardShortcuts'
+import { Toaster } from 'sonner'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
@@ -22,6 +23,7 @@ function App() {
   const [isLightTheme, setIsLightTheme] = useState(false)
   const [activePage, setActivePage] = useState('Dashboard')
   const [isNewTransactionOpen, setIsNewTransactionOpen] = useState(false)
+  const [transactionRevision, setTransactionRevision] = useState(0)
 
   useEffect(() => {
     const loader = window.setTimeout(() => setIsLoading(false), 1700)
@@ -69,6 +71,51 @@ function App() {
     }
   }
 
+  function applySavedTheme(theme: string): void {
+    setSetupTheme(theme)
+    setIsLightTheme(theme === 'Light')
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable
+      if (event.key === 'F5' || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'r')) {
+        event.preventDefault()
+        return
+      }
+      if (event.key === 'Escape' && isNewTransactionOpen) {
+        setIsNewTransactionOpen(false)
+        return
+      }
+      if (isTyping || (!event.ctrlKey && !event.metaKey)) return
+
+      let action: KeyboardShortcutAction | undefined
+      if (event.code === 'KeyN') action = 'newTransaction'
+      if (event.code === 'Digit1') action = 'dashboard'
+      if (event.code === 'Digit2') action = 'transactions'
+      if (event.code === 'KeyE') action = 'export'
+      if (event.code === 'KeyB' && event.shiftKey) action = 'backup'
+      if (event.code === 'Comma') action = 'settings'
+      if (event.code === 'KeyT') action = 'toggleTheme'
+      if (!action) return
+
+      event.preventDefault()
+      switch (action) {
+        case 'newTransaction': setIsNewTransactionOpen(true); break
+        case 'dashboard': setActivePage('Dashboard'); break
+        case 'transactions': setActivePage('Transactions'); break
+        case 'export': setActivePage('Export'); break
+        case 'backup': setActivePage('Backup & Restore'); break
+        case 'settings': setActivePage('Settings'); break
+        case 'toggleTheme': void toggleTheme(); break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isNewTransactionOpen, isLightTheme])
+
   const handleNavigate = (page: string) => {
     if (page === 'New Transaction') {
       setIsNewTransactionOpen(true)
@@ -81,25 +128,25 @@ function App() {
   const renderPage = (isLightTheme: boolean) => {
     switch (activePage) {
       case 'Dashboard':
-        return <div key={activePage} className="page-shell"><DashboardPage isLightTheme={isLightTheme} /></div>
+        return <div key={activePage} className="page-shell"><DashboardPage isLightTheme={isLightTheme} transactionRevision={transactionRevision} onViewAllTransactions={() => setActivePage('Transactions')} /></div>
       case 'Transactions':
-        return <div key={activePage} className="page-shell"><TransactionsPage isLightTheme={isLightTheme} onOpenNewTransaction={() => setIsNewTransactionOpen(true)} /></div>
+        return <div key={activePage} className="page-shell"><TransactionsPage isLightTheme={isLightTheme} onOpenNewTransaction={() => setIsNewTransactionOpen(true)} transactionRevision={transactionRevision} onLedgerChanged={() => setTransactionRevision((revision) => revision + 1)} /></div>
       case 'Income':
-        return <div key={activePage} className="page-shell"><IncomePage isLightTheme={isLightTheme} /></div>
+        return <div key={activePage} className="page-shell"><IncomePage isLightTheme={isLightTheme} transactionRevision={transactionRevision} /></div>
       case 'Expenses':
-        return <div key={activePage} className="page-shell"><ExpensesPage isLightTheme={isLightTheme} /></div>
+        return <div key={activePage} className="page-shell"><ExpensesPage isLightTheme={isLightTheme} transactionRevision={transactionRevision} /></div>
       case 'Categories':
         return <div key={activePage} className="page-shell"><CategoriesPage isLightTheme={isLightTheme} /></div>
       case 'Reports':
-        return <div key={activePage} className="page-shell"><ReportsPage isLightTheme={isLightTheme} /></div>
+        return <div key={activePage} className="page-shell"><ReportsPage isLightTheme={isLightTheme} transactionRevision={transactionRevision} /></div>
       case 'Export':
         return <div key={activePage} className="page-shell"><ExportPage isLightTheme={isLightTheme} /></div>
       case 'Backup & Restore':
         return <div key={activePage} className="page-shell"><BackupRestorePage isLightTheme={isLightTheme} /></div>
       case 'Settings':
-        return <div key={activePage} className="page-shell"><SettingsPage isLightTheme={isLightTheme} /></div>
+        return <div key={activePage} className="page-shell"><SettingsPage isLightTheme={isLightTheme} onThemeChange={applySavedTheme} /></div>
       default:
-        return <div key={activePage} className="page-shell"><DashboardPage isLightTheme={isLightTheme} /></div>
+        return <div key={activePage} className="page-shell"><DashboardPage isLightTheme={isLightTheme} transactionRevision={transactionRevision} onViewAllTransactions={() => setActivePage('Transactions')} /></div>
     }
   }
 
@@ -119,8 +166,20 @@ function App() {
       />
 
       {isNewTransactionOpen && (
-        <NewTransactionSheet isLightTheme={isLightTheme} onClose={() => setIsNewTransactionOpen(false)} />
+        <NewTransactionSheet
+          isLightTheme={isLightTheme}
+          onClose={() => setIsNewTransactionOpen(false)}
+          onSaved={() => setTransactionRevision((revision) => revision + 1)}
+        />
       )}
+      <Toaster
+       position="bottom-right"
+       richColors
+       theme={isLightTheme ? 'light' : 'dark'}
+       closeButton
+       duration={4000}
+       className="z-[9999]"
+     />
     </>
   )
 }
