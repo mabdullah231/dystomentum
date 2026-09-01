@@ -488,20 +488,109 @@ export async function getReportsOverview(value?: unknown): Promise<ReportsOvervi
   }
 }
 
+function sumAllUpTo(db: Awaited<ReturnType<typeof getDatabase>>, table: 'Income' | 'Expense', endDate: string): number {
+  return Number(execRows(db, `SELECT COALESCE(SUM(Amount), 0) FROM ${table} WHERE Date < ?`, [endDate])[0]?.[0] ?? 0)
+}
+
+// export async function getDashboardOverview(yearMonth?: unknown): Promise<DashboardOverview> {
+//   const db = await getDatabase()
+//   const { year, month } = parseYearMonth(yearMonth)
+//   const window = monthWindow(year, month)
+//   const previous = monthWindow(year, month - 1)
+
+//   const monthlyIncome = sumAmount(db, 'Income', window.start, window.next)
+//   const monthlyExpenses = sumAmount(db, 'Expense', window.start, window.next)
+//   const previousIncome = sumAmount(db, 'Income', previous.start, previous.next)
+//   const previousExpenses = sumAmount(db, 'Expense', previous.start, previous.next)
+//   const savings = monthlyIncome - monthlyExpenses
+//   const previousSavings = previousIncome - previousExpenses
+//   const previousBalance = previousIncome - previousExpenses
+
+//   const expenseRows = execRows(db, `
+//     SELECT COALESCE(c.Name, 'Uncategorized') AS Category, COALESCE(SUM(e.Amount), 0) AS Total
+//     FROM Expense e
+//     LEFT JOIN Categories c ON c.Category_ID = e.Category_ID
+//     WHERE e.Date >= ? AND e.Date < ?
+//     GROUP BY COALESCE(c.Name, 'Uncategorized')
+//     ORDER BY Total DESC
+//   `, [window.start, window.next])
+
+//   const recentTransactions = execRows(db, `
+//     SELECT Type, ID, Date, Description, Category, Amount FROM (
+//       SELECT 'INCOME' AS Type, 'INC-' || i.Income_ID AS ID, i.Date, i.Title AS Description, COALESCE(c.Name, 'Uncategorized') AS Category, i.Amount
+//       FROM Income i
+//       LEFT JOIN Categories c ON c.Category_ID = i.Category_ID
+//       WHERE i.Date >= ? AND i.Date < ?
+//       UNION ALL
+//       SELECT 'EXPENSE' AS Type, 'EXP-' || e.Expense_ID AS ID, e.Date, e.Title AS Description, COALESCE(c.Name, 'Uncategorized') AS Category, e.Amount
+//       FROM Expense e
+//       LEFT JOIN Categories c ON c.Category_ID = e.Category_ID
+//       WHERE e.Date >= ? AND e.Date < ?
+//     ) AS ledger
+//     ORDER BY Date DESC, ID DESC
+//     LIMIT 8
+//   `, [window.start, window.next, window.start, window.next])
+
+//   const chart = Array.from({ length: 12 }, (_, index) => {
+//     const offset = 11 - index
+//     const bar = monthWindow(year, month - offset)
+//     return {
+//       label: bar.label.slice(0, 3),
+//       income: sumAmount(db, 'Income', bar.start, bar.next),
+//       expense: sumAmount(db, 'Expense', bar.start, bar.next),
+//     }
+//   })
+
+//   return {
+//     metrics: {
+//       monthlyIncome,
+//       monthlyExpenses,
+//       savings,
+//       savingsRate: monthlyIncome > 0 ? (savings / monthlyIncome) * 100 : 0,
+//       incomeTrend: percentChange(monthlyIncome, previousIncome),
+//       expenseTrend: percentChange(monthlyExpenses, previousExpenses),
+//       savingsTrend: percentChange(savings, previousSavings),
+//       balanceTrend: percentChange(savings, previousBalance),
+//     },
+//     chart,
+//     expenseBreakdown: categoryShares(
+//       expenseRows.map((row) => ({ category: String(row[0]), amount: Number(row[1]) })),
+//       monthlyExpenses,
+//     ),
+//     recentTransactions: recentTransactions.map((row) => ({
+//       id: String(row[1]),
+//       date: String(row[2]),
+//       description: String(row[3]),
+//       category: String(row[4]),
+//       type: String(row[0]) as TransactionType,
+//       amount: Number(row[5]),
+//     })),
+//   }
+// }
+
 export async function getDashboardOverview(yearMonth?: unknown): Promise<DashboardOverview> {
   const db = await getDatabase()
   const { year, month } = parseYearMonth(yearMonth)
   const window = monthWindow(year, month)
   const previous = monthWindow(year, month - 1)
 
+  // Monthly income & expenses (for cards)
   const monthlyIncome = sumAmount(db, 'Income', window.start, window.next)
   const monthlyExpenses = sumAmount(db, 'Expense', window.start, window.next)
   const previousIncome = sumAmount(db, 'Income', previous.start, previous.next)
   const previousExpenses = sumAmount(db, 'Expense', previous.start, previous.next)
-  const savings = monthlyIncome - monthlyExpenses
-  const previousSavings = previousIncome - previousExpenses
-  const previousBalance = previousIncome - previousExpenses
 
+  // Cumulative savings from start of time to end of current month
+  const cumulativeIncome = sumAllUpTo(db, 'Income', window.next)
+  const cumulativeExpenses = sumAllUpTo(db, 'Expense', window.next)
+  const savings = cumulativeIncome - cumulativeExpenses
+
+  // Cumulative savings up to start of current month (for trend)
+  const prevCumulativeIncome = sumAllUpTo(db, 'Income', window.start)
+  const prevCumulativeExpenses = sumAllUpTo(db, 'Expense', window.start)
+  const previousSavings = prevCumulativeIncome - prevCumulativeExpenses
+
+  // Expense breakdown for current month
   const expenseRows = execRows(db, `
     SELECT COALESCE(c.Name, 'Uncategorized') AS Category, COALESCE(SUM(e.Amount), 0) AS Total
     FROM Expense e
@@ -511,6 +600,7 @@ export async function getDashboardOverview(yearMonth?: unknown): Promise<Dashboa
     ORDER BY Total DESC
   `, [window.start, window.next])
 
+  // Recent transactions for current month
   const recentTransactions = execRows(db, `
     SELECT Type, ID, Date, Description, Category, Amount FROM (
       SELECT 'INCOME' AS Type, 'INC-' || i.Income_ID AS ID, i.Date, i.Title AS Description, COALESCE(c.Name, 'Uncategorized') AS Category, i.Amount
@@ -527,6 +617,7 @@ export async function getDashboardOverview(yearMonth?: unknown): Promise<Dashboa
     LIMIT 8
   `, [window.start, window.next, window.start, window.next])
 
+  // Monthly chart (12 months, up to current month)
   const chart = Array.from({ length: 12 }, (_, index) => {
     const offset = 11 - index
     const bar = monthWindow(year, month - offset)
@@ -542,11 +633,11 @@ export async function getDashboardOverview(yearMonth?: unknown): Promise<Dashboa
       monthlyIncome,
       monthlyExpenses,
       savings,
-      savingsRate: monthlyIncome > 0 ? (savings / monthlyIncome) * 100 : 0,
+      savingsRate: cumulativeIncome > 0 ? (savings / cumulativeIncome) * 100 : 0,
       incomeTrend: percentChange(monthlyIncome, previousIncome),
       expenseTrend: percentChange(monthlyExpenses, previousExpenses),
       savingsTrend: percentChange(savings, previousSavings),
-      balanceTrend: percentChange(savings, previousBalance),
+      balanceTrend: percentChange(savings, previousSavings), // same as savings trend
     },
     chart,
     expenseBreakdown: categoryShares(
