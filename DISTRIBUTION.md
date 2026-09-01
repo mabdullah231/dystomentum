@@ -1,3 +1,7 @@
+# Version 1.0.1 Update
+
+Introduced Support for AMD Systems. Testing Pending. Along with previous month saving shows up on dashboard.
+
 # Dystomentum Distribution Notes
 
 Dystomentum is an offline-first desktop ledger for personal income and expense tracking. It runs as an Electron application with a React renderer and a local SQLite database powered by `sql.js`.
